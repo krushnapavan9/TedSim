@@ -22,7 +22,8 @@ Mutated_state_dist <- function(N_ms,cm){
 #' @param mutation_dist input distribution for the mutated states
 #' @param p_d whether or not to simulate dropout effects, 0 or 1
 #' @param unif_on distribution mode of mutated states. TRUE: uniform distribution; FALSE: real fitted distribution
-generate_mutation <- function(barcode, mu=0.1 , N_ms = 100 ,mutation_dist = NULL, p_d = 0, unif_on = FALSE){
+#' @param barcode_nd non droped version of barcode
+generate_mutation <- function(barcode, barcode_nd, mu=0.1 , N_ms = 100 ,mutation_dist = NULL, p_d = 0, unif_on = FALSE){
   if (unif_on){
     states <- as.list(seq (1,N_ms,1))
     prob_dist <- NULL
@@ -33,17 +34,20 @@ generate_mutation <- function(barcode, mu=0.1 , N_ms = 100 ,mutation_dist = NULL
 
   m <- length(barcode)
   child_barcode <- barcode
+  child_barcode_nd <- barcode_nd
   mu_loc = runif(m) < mu
   mutation_cites = (child_barcode == 0) &  mu_loc
   n_mut = sum(mutation_cites)
   if (n_mut != 0) {
-    child_barcode[mutation_cites] = as.integer(sample(states, n_mut, replace = T, prob = prob_dist))
+    mutations = as.integer(sample(states, n_mut, replace = T, prob = prob_dist))
+    child_barcode[mutation_cites] = mutations
+    child_barcode_nd[mutation_cites] = mutations
     if ((n_mut >=2)&(p_d == 1)){
       child_barcode <- generate_dropout(child_barcode,mutation_cites)
     }
   }
-
-  return (child_barcode)
+  child_barcode_comb = c(child_barcode, child_barcode_nd)
+  return(child_barcode_comb)
 }
 
 #' Generate excision dropout

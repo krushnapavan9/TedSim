@@ -20,6 +20,7 @@
 #' @import ape
 #' @export
 SimulateCIFs <- function(ncells,phyla,cif_center=1, Sigma=0.5, p_a = 0.8,p_edge = NULL,n_CIF,n_diff,step = 1,p_d = 0.1,mu = 0.1, N_char = 9, N_ms = 100, unif_on = FALSE, SIF_res = NULL, max_walk = 2, lambda = 0.05, T_cell = NULL){
+  print('New modified function by KP')
   if (is.null(T_cell)){
     T_cell <- stree(ncells,type = "balanced")
   }
@@ -68,8 +69,9 @@ SimulateCIFs <- function(ncells,phyla,cif_center=1, Sigma=0.5, p_a = 0.8,p_edge 
   }
 
   root_barcode <- rep(0,N_char)
-  neutral <- Samplelineage(Node_cell,0,cif_center, edges = cell_edges, edges_state=state_edges,sif_mean=sif_mean,S = State_table,cif = 1, p_a = p_a,p_d = p_d, mu = mu, flag = 1, barcode = root_barcode, N_ms = N_ms, unif_on = unif_on,lambda = lambda)
-  muts <- neutral[,5:length(neutral[1,])]
+  neutral <- Samplelineage(Node_cell,0,cif_center, edges = cell_edges, edges_state=state_edges,sif_mean=sif_mean,S = State_table,cif = 1, p_a = p_a,p_d = p_d, mu = mu, flag = 1, barcode = root_barcode, barcode_nd = root_barcode, N_ms = N_ms, unif_on = unif_on,lambda = lambda)
+  muts <- neutral[,5:(5+N_char-1)]
+  muts_nd <- neutral[,(5+N_char):length(neutral[1,])]
 
   param_names <- c("kon", "koff", "s")
   N_DE_cifs = c(0,0,n_diff)
@@ -83,6 +85,7 @@ SimulateCIFs <- function(ncells,phyla,cif_center=1, Sigma=0.5, p_a = 0.8,p_edge 
     nd_cif <- do.call(cbind,nd_cif)
     if(N_DE_cifs[parami]!=0){
       #if there is more than 1 de_cifs for the parameter we are looking at
+      print("flag became zero")
       de_cif <- lapply(c(1:N_DE_cifs[parami]),function(cif_i){
         Samplelineage(Node_cell,0,cif_center,edges=cell_edges,edges_state=state_edges,sif_mean=sif_mean,S = State_table, p_a = p_a,cif=cif_i, flag = 0,lambda = lambda)
       })
@@ -101,7 +104,7 @@ SimulateCIFs <- function(ncells,phyla,cif_center=1, Sigma=0.5, p_a = 0.8,p_edge 
   })
   muts[muts == Inf] <- '-'
   colnames(State_table) <- c("parent","cluster","depth","cellID")
-  cif_res <- list(cifs,State_table,state_tree,T_cell,sif_mean_raw,sif_label,muts)
+  cif_res <- list(cifs,State_table,state_tree,T_cell,sif_mean_raw,sif_label,muts,muts_nd)
   return(cif_res)
 
 }
